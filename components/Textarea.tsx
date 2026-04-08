@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 interface TextareaProps {
   placeholder?: string;
   value?: string;
@@ -24,9 +26,9 @@ export function Textarea({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-500 mb-2">
+        <label className="block text-[0.7rem] font-normal tracking-[0.12em] uppercase text-[var(--color-text-muted)] mb-3 font-[family-name:var(--font-mono)]">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-[var(--color-error)] ml-1">*</span>}
         </label>
       )}
       <textarea
@@ -35,16 +37,18 @@ export function Textarea({
         onChange={onChange}
         disabled={disabled}
         rows={rows}
-        className={`
-          w-full px-4 py-2.5 border border-gray-300 rounded-lg
-          text-base font-400 transition-all resize-none
-          focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent
-          disabled:bg-gray-100 disabled:cursor-not-allowed
-          ${error ? "border-red-500" : ""}
-          ${className}
-        `}
+        className={cn(
+          "w-full px-4 py-3 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-[var(--radius-md)]",
+          "text-[0.9rem] font-light text-[var(--color-text-primary)] placeholder:text-[var(--color-text-dim)]",
+          "transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] resize-none",
+          "focus:outline-none focus:border-[var(--color-border-focus)] focus:bg-[var(--color-bg-surface)]",
+          "disabled:opacity-40 disabled:cursor-not-allowed",
+          "leading-relaxed",
+          error && "border-[var(--color-error-border)]",
+          className
+        )}
       />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      {error && <p className="text-[var(--color-error)] text-[0.75rem] mt-2 font-light">{error}</p>}
     </div>
   );
 }

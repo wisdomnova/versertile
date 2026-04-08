@@ -2,16 +2,19 @@ import Image from "next/image";
 
 export function Logo({ size = 32, withText = false }: { size?: number; withText?: boolean }) {
   return (
-    <div className="flex items-center" style={{ gap: '2px' }}>
+    <div className="flex items-center" style={{ gap: '4px' }}>
       <Image
-        src="/VERSERTILE/LOGO BLACK PNG.PNG"
+        src="/VERSERTILE/LOGO WHITE PNG.PNG"
         alt="VERSERTILE"
         width={size}
         height={size}
         priority
       />
       {withText && (
-        <span className="text-base" style={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+        <span
+          className="text-[0.8rem] text-[var(--color-text-primary)] tracking-[0.2em] uppercase"
+          style={{ fontWeight: 300 }}
+        >
           VERSERTILE
         </span>
       )}

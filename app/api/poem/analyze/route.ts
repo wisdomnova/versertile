@@ -1,26 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
+import { verifyToken } from '@/lib/auth/jwt';
+import { COOKIE_NAMES } from '@/lib/auth/cookies';
+import { sanitizeText } from '@/lib/auth/sanitize';
 import type { PoemAnalyzeRequest, ApiErrorResponse, ApiSuccessResponse } from '@/lib/types/api';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!url || !key) {
-    throw new Error('Supabase credentials not configured');
-  }
-  
+  if (!url || !key) throw new Error('Supabase credentials not configured');
   return createClient(url, key);
 }
 
 function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('OpenAI API key not configured');
-  }
-  
+  if (!apiKey) throw new Error('OpenAI API key not configured');
   return new OpenAI({ apiKey });
 }
 
@@ -115,9 +110,8 @@ Respond in valid JSON format only:
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
-    // Get authenticated user via Bearer token
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    
+
+    const token = request.cookies.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
     if (!token) {
       return NextResponse.json<ApiErrorResponse>(
         { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' },
@@ -125,12 +119,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
+    let userId: string;
+    try {
+      const payload = await verifyToken(token);
+      if (payload.type !== 'access' || !payload.sub) {
+        return NextResponse.json<ApiErrorResponse>(
+          { success: false, error: 'Invalid token', code: 'INVALID_TOKEN' },
+          { status: 401 }
+        );
+      }
+      userId = payload.sub;
+    } catch {
       return NextResponse.json<ApiErrorResponse>(
         { success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' },
         { status: 401 }
@@ -139,17 +138,17 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: PoemAnalyzeRequest = await request.json();
-    const { text, language = 'en' } = body;
+    const { language = 'en' } = body;
 
-    // Validate input
-    if (!text) {
+    const trimmedText = sanitizeText(body.text || '');
+
+    if (!trimmedText) {
       return NextResponse.json<ApiErrorResponse>(
         { success: false, error: 'Text is required', code: 'MISSING_TEXT' },
         { status: 400 }
       );
     }
 
-    const trimmedText = text.trim();
     const wordCount = trimmedText.split(/\s+/).length;
 
     if (wordCount < 10) {
@@ -199,7 +198,7 @@ export async function POST(request: NextRequest) {
       .from('analyses')
       .insert([
         {
-          user_id: user.id,
+          user_id: userId,
           text_content: trimmedText,
           text_length: trimmedText.length,
           originality_score: analysisResult.originality,
@@ -234,7 +233,7 @@ export async function POST(request: NextRequest) {
 
     await supabase.from('audit_logs').insert([
       {
-        user_id: user.id,
+        user_id: userId,
         action: 'analysis_created',
         entity_type: 'analysis',
         entity_id: analysis.id,

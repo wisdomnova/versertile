@@ -9,14 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Open Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Inter', 'Helvetica Neue', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Playfair Display', 'Times New Roman', 'serif'],
+        mono: ['var(--font-mono)', 'JetBrains Mono', 'Courier New', 'monospace'],
       },
       colors: {
-        background: '#ffffff',
-        foreground: '#171717',
-      },
-      fontWeight: {
-        900: '900',
+        background: '#0a0a0a',
+        foreground: '#e8e8e8',
       },
     },
   },
